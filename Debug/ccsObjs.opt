@@ -1,0 +1,13 @@
+"./MAS_CAN.o"
+"./MAS_GPIO.o"
+"./MAS_I2C.o"
+"./i2ccontroller.o"
+"./main_freertos.o"
+"./ti_drivers_config.o"
+"./ti_msp_dl_config.o"
+"./freertos/ticlang/startup_mspm0g350x_ticlang.o"
+"../mspm0g3507.cmd"
+-l"/Users/krisztiancsuta/ti/mspm0_sdk_2_06_00_05/source/ti/drivers/lib/ticlang/m0p/drivers_mspm0g1x0x_g3x0x.a"
+-lfreertos_builds_LP_MSPM0G3507_release_ticlang.lib
+-l"/Users/krisztiancsuta/ti/mspm0_sdk_2_06_00_05/source/ti/driverlib/lib/ticlang/m0p/mspm0g1x0x_g3x0x/driverlib.a"
+-llibc.a
