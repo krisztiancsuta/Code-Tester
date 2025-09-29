@@ -87,6 +87,7 @@ jobs:
         fi
         
         # Run the build
+        make check-tools
         make
         
         echo ""
