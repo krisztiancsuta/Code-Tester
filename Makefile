@@ -8,8 +8,8 @@ RELEASE_DIR = Release
 
 # Toolchain paths - Update these paths according to your installation
 # Toolchain paths - can be set via command line flags or environment variables
-TI_COMPILER_ROOT ?= $(TI_COMPILER_ROOT)
-MSPM0_SDK_ROOT ?= $(MSPM0_SDK_ROOT)
+TI_COMPILER_ROOT ?= $(TI_ARM_CLANG_INSTALL_DIR)
+MSPM0_SDK_ROOT ?= $(MSPM0_SDK_INSTALL_DIR)
 
 # Toolchain binaries
 CC = $(TI_COMPILER_ROOT)/bin/tiarmclang

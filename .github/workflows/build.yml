@@ -38,20 +38,20 @@ jobs:
         echo "Available space: $(df -h /)"
         echo ""
         echo "=== Toolchain Information ==="
-        echo "TI Compiler Root: ${TI_COMPILER_ROOT:-'Not set'}"
-        echo "MSPM0 SDK Root: ${MSPM0_SDK_ROOT:-'Not set'}"
+        echo "TI ARM CLANG Install Dir: ${TI_ARM_CLANG_INSTALL_DIR:-'Not set'}"
+        echo "MSPM0 SDK Install Dir: ${MSPM0_SDK_INSTALL_DIR:-'Not set'}"
         echo ""
-        if [ -n "$TI_COMPILER_ROOT" ]; then
+        if [ -n "$TI_ARM_CLANG_INSTALL_DIR" ]; then
           echo "TI Compiler version:"
-          $TI_COMPILER_ROOT/bin/tiarmclang --version || echo "Compiler not found"
+          $TI_ARM_CLANG_INSTALL_DIR/tiarmclang --version || echo "Compiler not found"
           echo ""
           echo "Available tools:"
-          ls -la $TI_COMPILER_ROOT/bin/ | head -10
+          ls -la $TI_ARM_CLANG_INSTALL_DIR/ | head -10
         fi
         echo ""
-        if [ -n "$MSPM0_SDK_ROOT" ]; then
+        if [ -n "$MSPM0_SDK_INSTALL_DIR" ]; then
           echo "SDK structure:"
-          ls -la $MSPM0_SDK_ROOT/ || echo "SDK not found"
+          ls -la $MSPM0_SDK_INSTALL_DIR/ || echo "SDK not found"
         fi
 
     # Check if required files exist
@@ -96,10 +96,10 @@ jobs:
           ls -la Release/MAS_SW_2025.*
           
           # Show binary size information
-          if command -v $TI_COMPILER_ROOT/bin/tiarmsize >/dev/null 2>&1; then
+          if command -v $TI_ARM_CLANG_INSTALL_DIR/tiarmsize >/dev/null 2>&1; then
             echo ""
             echo "Binary size information:"
-            $TI_COMPILER_ROOT/bin/tiarmsize Release/MAS_SW_2025.out
+            $TI_ARM_CLANG_INSTALL_DIR/tiarmsize Release/MAS_SW_2025.out
           fi
         else
           echo "❌ Build failed - output file not found"
@@ -165,7 +165,7 @@ jobs:
         build-type: [release, debug]
     
     container:
-      image: krisztiancsuta/ti-mspm0-toolchain:latest
+      image: csutachris/ti-mspm0-builder:latest
     
     steps:
     - name: Checkout repository
