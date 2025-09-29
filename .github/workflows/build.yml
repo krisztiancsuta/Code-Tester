@@ -1,0 +1,189 @@
+name: Build MSPM0G3507 Project
+
+# Trigger the workflow on push and pull requests
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    # Use your Docker container from DockerHub
+    container:
+      image: csutachris/ti-mspm0-builder:latest
+      # If your container is private, you'll need to add credentials
+      # credentials:
+      #   username: ${{ secrets.DOCKERHUB_USERNAME }}
+      #   password: ${{ secrets.DOCKERHUB_TOKEN }}
+    
+    steps:
+    # Checkout your repository code
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        # Fetch full history for better Git operations
+        fetch-depth: 0
+
+    # Verify the build environment
+    - name: Verify build environment
+      run: |
+        echo "=== Build Environment Information ==="
+        echo "Working directory: $(pwd)"
+        echo "Container user: $(whoami)"
+        echo "Available space: $(df -h /)"
+        echo ""
+        echo "=== Toolchain Information ==="
+        echo "TI Compiler Root: ${TI_COMPILER_ROOT:-'Not set'}"
+        echo "MSPM0 SDK Root: ${MSPM0_SDK_ROOT:-'Not set'}"
+        echo ""
+        if [ -n "$TI_COMPILER_ROOT" ]; then
+          echo "TI Compiler version:"
+          $TI_COMPILER_ROOT/bin/tiarmclang --version || echo "Compiler not found"
+          echo ""
+          echo "Available tools:"
+          ls -la $TI_COMPILER_ROOT/bin/ | head -10
+        fi
+        echo ""
+        if [ -n "$MSPM0_SDK_ROOT" ]; then
+          echo "SDK structure:"
+          ls -la $MSPM0_SDK_ROOT/ || echo "SDK not found"
+        fi
+
+    # Check if required files exist
+    - name: Verify project files
+      run: |
+        echo "=== Project Files Check ==="
+        echo "Makefile_TI exists: $([ -f Makefile_TI ] && echo 'YES' || echo 'NO')"
+        echo "FreeRTOS builds exists: $([ -d freertos_builds_LP_MSPM0G3507_release_ticlang ] && echo 'YES' || echo 'NO')"
+        echo "Source files:"
+        ls -la *.c *.h 2>/dev/null || echo "No C files found"
+        echo ""
+        echo "Project structure:"
+        find . -maxdepth 2 -type f -name "*.c" -o -name "*.h" -o -name "Makefile*" -o -name "*.cmd"
+
+    # Clean any previous build artifacts
+    - name: Clean previous builds
+      run: |
+        echo "=== Cleaning Previous Builds ==="
+        if [ -f Makefile_TI ]; then
+          make -f Makefile_TI clean || echo "Clean failed or no clean target"
+        else
+          echo "Makefile_TI not found, manual cleanup"
+          rm -rf Debug Release Flash_or_Debug *.out *.map 2>/dev/null || true
+        fi
+
+    # Build the project
+    - name: Build project
+      run: |
+        echo "=== Building Project ==="
+        if [ ! -f Makefile_TI ]; then
+          echo "ERROR: Makefile_TI not found!"
+          exit 1
+        fi
+        
+        # Run the build
+        make -f Makefile_TI
+        
+        echo ""
+        echo "=== Build Results ==="
+        if [ -f Release/MAS_SW_2025.out ]; then
+          echo "✅ Build successful!"
+          ls -la Release/MAS_SW_2025.*
+          
+          # Show binary size information
+          if command -v $TI_COMPILER_ROOT/bin/tiarmsize >/dev/null 2>&1; then
+            echo ""
+            echo "Binary size information:"
+            $TI_COMPILER_ROOT/bin/tiarmsize Release/MAS_SW_2025.out
+          fi
+        else
+          echo "❌ Build failed - output file not found"
+          exit 1
+        fi
+
+    # Debug build (optional)
+    - name: Build debug version
+      run: |
+        echo "=== Building Debug Version ==="
+        make -f Makefile_TI debug || echo "Debug build failed or not available"
+        
+        if [ -f Debug/MAS_SW_2025.out ]; then
+          echo "✅ Debug build successful!"
+          ls -la Debug/MAS_SW_2025.*
+        else
+          echo "ℹ️ Debug build not available or failed"
+        fi
+      continue-on-error: true
+
+    # Upload build artifacts
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: mspm0g3507-firmware-${{ github.sha }}
+        path: |
+          Release/MAS_SW_2025.out
+          Release/MAS_SW_2025.map
+          Debug/MAS_SW_2025.out
+          Debug/MAS_SW_2025.map
+        retention-days: 30
+      if: always()
+
+    # Create release on tag (optional)
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          Automated release for MSPM0G3507 firmware
+          
+          **Build Information:**
+          - Commit: ${{ github.sha }}
+          - Build Date: ${{ github.event.head_commit.timestamp }}
+          
+          **Artifacts:**
+          - Release firmware: MAS_SW_2025.out
+          - Memory map: MAS_SW_2025.map
+        draft: false
+        prerelease: false
+
+  # Optional: Matrix build for multiple configurations
+  build-matrix:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    strategy:
+      matrix:
+        build-type: [release, debug]
+    
+    container:
+      image: krisztiancsuta/ti-mspm0-toolchain:latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build ${{ matrix.build-type }}
+      run: |
+        echo "Building ${{ matrix.build-type }} configuration"
+        if [ "${{ matrix.build-type }}" = "release" ]; then
+          make -f Makefile_TI
+        else
+          make -f Makefile_TI debug
+        fi
+
+    - name: Upload ${{ matrix.build-type }} artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: firmware-${{ matrix.build-type }}-${{ github.sha }}
+        path: |
+          ${{ matrix.build-type == 'release' && 'Release' || 'Debug' }}/*.out
+          ${{ matrix.build-type == 'release' && 'Release' || 'Debug' }}/*.map
