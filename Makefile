@@ -12,13 +12,13 @@ TI_COMPILER_ROOT ?= $(TI_ARM_CLANG_INSTALL_DIR)
 MSPM0_SDK_ROOT ?= $(MSPM0_SDK_INSTALL_DIR)
 
 # Toolchain binaries
-CC = $(TI_COMPILER_ROOT)/bin/tiarmclang
-LD = $(TI_COMPILER_ROOT)/bin/tiarmclang
-OBJCOPY = $(TI_COMPILER_ROOT)/bin/tiarmobjcopy
-SIZE = $(TI_COMPILER_ROOT)/bin/tiarmsize
-OBJDUMP = $(TI_COMPILER_ROOT)/bin/tiarmobjdump
-NM = $(TI_COMPILER_ROOT)/bin/tiarmnm
-READELF = $(TI_COMPILER_ROOT)/bin/tiarmreadelf
+CC = $(TI_COMPILER_ROOT)/tiarmclang
+LD = $(TI_COMPILER_ROOT)/tiarmclang
+OBJCOPY = $(TI_COMPILER_ROOT)/tiarmobjcopy
+SIZE = $(TI_COMPILER_ROOT)/tiarmsize
+OBJDUMP = $(TI_COMPILER_ROOT)/tiarmobjdump
+NM = $(TI_COMPILER_ROOT)/tiarmnm
+READELF = $(TI_COMPILER_ROOT)/tiarmreadelf
 
 # Source files (automatically find all .c files in current directory)
 C_SOURCES = \
