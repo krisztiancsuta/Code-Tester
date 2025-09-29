@@ -11,14 +11,31 @@ RELEASE_DIR = Release
 TI_COMPILER_ROOT ?= $(TI_ARM_CLANG_INSTALL_DIR)
 MSPM0_SDK_ROOT ?= $(MSPM0_SDK_INSTALL_DIR)
 
-# Toolchain binaries
-CC = $(TI_COMPILER_ROOT)/tiarmclang
-LD = $(TI_COMPILER_ROOT)/tiarmclang
-OBJCOPY = $(TI_COMPILER_ROOT)/tiarmobjcopy
-SIZE = $(TI_COMPILER_ROOT)/tiarmsize
-OBJDUMP = $(TI_COMPILER_ROOT)/tiarmobjdump
-NM = $(TI_COMPILER_ROOT)/tiarmnm
-READELF = $(TI_COMPILER_ROOT)/tiarmreadelf
+# Toolchain binaries - handle both Docker (/opt/ti/bincov) and Mac (/bin) paths
+ifeq ($(wildcard $(TI_COMPILER_ROOT)/bin/tiarmclang),)
+    # Docker container path (tools directly in root)
+    CC = $(TI_COMPILER_ROOT)/tiarmclang
+    LD = $(TI_COMPILER_ROOT)/tiarmclang
+    OBJCOPY = $(TI_COMPILER_ROOT)/tiarmobjcopy
+    SIZE = $(TI_COMPILER_ROOT)/tiarmsize
+    OBJDUMP = $(TI_COMPILER_ROOT)/tiarmobjdump
+    NM = $(TI_COMPILER_ROOT)/tiarmnm
+    READELF = $(TI_COMPILER_ROOT)/tiarmreadelf
+    # Use system headers for Docker container (TI headers seem incomplete)
+    TOOLCHAIN_INCLUDE = /usr/lib/gcc/x86_64-linux-gnu/9/include
+    EXTRA_CFLAGS = -ffreestanding -nostdlib
+else
+    # Mac installation path (tools in bin subdirectory)
+    CC = $(TI_COMPILER_ROOT)/bin/tiarmclang
+    LD = $(TI_COMPILER_ROOT)/bin/tiarmclang
+    OBJCOPY = $(TI_COMPILER_ROOT)/bin/tiarmobjcopy
+    SIZE = $(TI_COMPILER_ROOT)/bin/tiarmsize
+    OBJDUMP = $(TI_COMPILER_ROOT)/bin/tiarmobjdump
+    NM = $(TI_COMPILER_ROOT)/bin/tiarmnm
+    READELF = $(TI_COMPILER_ROOT)/bin/tiarmreadelf
+    TOOLCHAIN_INCLUDE = $(TI_COMPILER_ROOT)/include
+    EXTRA_CFLAGS = 
+endif
 
 # Source files (automatically find all .c files in current directory)
 C_SOURCES = \
@@ -50,7 +67,7 @@ INCLUDES = \
 	-I$(MSPM0_SDK_ROOT)/source/ti/drivers/uart \
 	-I$(MSPM0_SDK_ROOT)/source/ti/drivers/dma \
 	-I$(MSPM0_SDK_ROOT)/source/ti/display \
-	-I$(TI_COMPILER_ROOT)/include
+	-I$(TOOLCHAIN_INCLUDE)
 
 # Preprocessor definitions
 DEFINES = \
@@ -78,7 +95,9 @@ CFLAGS = \
 	-std=c99 \
 	-MMD \
 	-MP \
-	-fno-builtin
+	-fno-builtin \
+	$(EXTRA_CFLAGS) \
+	-isystem $(TOOLCHAIN_INCLUDE)
 
 # Debug compiler flags
 DEBUG_CFLAGS = \
@@ -99,7 +118,9 @@ DEBUG_CFLAGS = \
 	-MMD \
 	-MP \
 	-fno-builtin \
-	-DDEBUG
+	-DDEBUG \
+	$(EXTRA_CFLAGS) \
+	-isystem $(TOOLCHAIN_INCLUDE)
 
 # Linker flags (Release)
 LDFLAGS = \
