@@ -58,7 +58,7 @@ jobs:
     - name: Verify project files
       run: |
         echo "=== Project Files Check ==="
-        echo "Makefile_TI exists: $([ -f Makefile_TI ] && echo 'YES' || echo 'NO')"
+        echo "Makefile exists: $([ -f Makefile ] && echo 'YES' || echo 'NO')"
         echo "FreeRTOS builds exists: $([ -d freertos_builds_LP_MSPM0G3507_release_ticlang ] && echo 'YES' || echo 'NO')"
         echo "Source files:"
         ls -la *.c *.h 2>/dev/null || echo "No C files found"
@@ -70,10 +70,10 @@ jobs:
     - name: Clean previous builds
       run: |
         echo "=== Cleaning Previous Builds ==="
-        if [ -f Makefile_TI ]; then
-          make -f Makefile_TI clean || echo "Clean failed or no clean target"
+        if [ -f Makefile ]; then
+          make clean || echo "Clean failed or no clean target"
         else
-          echo "Makefile_TI not found, manual cleanup"
+          echo "Makefile not found, manual cleanup"
           rm -rf Debug Release Flash_or_Debug *.out *.map 2>/dev/null || true
         fi
 
@@ -81,13 +81,13 @@ jobs:
     - name: Build project
       run: |
         echo "=== Building Project ==="
-        if [ ! -f Makefile_TI ]; then
-          echo "ERROR: Makefile_TI not found!"
+        if [ ! -f Makefile ]; then
+          echo "ERROR: Makefile not found!"
           exit 1
         fi
         
         # Run the build
-        make -f Makefile_TI
+        make
         
         echo ""
         echo "=== Build Results ==="
@@ -110,7 +110,7 @@ jobs:
     - name: Build debug version
       run: |
         echo "=== Building Debug Version ==="
-        make -f Makefile_TI debug || echo "Debug build failed or not available"
+        make debug || echo "Debug build failed or not available"
         
         if [ -f Debug/MAS_SW_2025.out ]; then
           echo "✅ Debug build successful!"
@@ -175,9 +175,9 @@ jobs:
       run: |
         echo "Building ${{ matrix.build-type }} configuration"
         if [ "${{ matrix.build-type }}" = "release" ]; then
-          make -f Makefile_TI
+          make
         else
-          make -f Makefile_TI debug
+          make debug
         fi
 
     - name: Upload ${{ matrix.build-type }} artifacts
