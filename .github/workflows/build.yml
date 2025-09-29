@@ -15,7 +15,7 @@ jobs:
     
     # Use your Docker container from DockerHub
     container:
-      image: csutachris/ti-mspm0-builder:latest
+      image: csutachris/ti-mspm0-dev:latest
       # If your container is private, you'll need to add credentials
       # credentials:
       #   username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -166,7 +166,7 @@ jobs:
         build-type: [release, debug]
     
     container:
-      image: csutachris/ti-mspm0-builder:latest
+      image: csutachris/ti-mspm0-dev:latest
     
     steps:
     - name: Checkout repository
