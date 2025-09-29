@@ -49,7 +49,8 @@ INCLUDES = \
 	-I$(MSPM0_SDK_ROOT)/source/ti/drivers/i2c \
 	-I$(MSPM0_SDK_ROOT)/source/ti/drivers/uart \
 	-I$(MSPM0_SDK_ROOT)/source/ti/drivers/dma \
-	-I$(MSPM0_SDK_ROOT)/source/ti/display
+	-I$(MSPM0_SDK_ROOT)/source/ti/display \
+	-I$(TI_COMPILER_ROOT)/include
 
 # Preprocessor definitions
 DEFINES = \
@@ -65,6 +66,8 @@ CFLAGS = \
 	-march=armv6-m \
 	-mthumb \
 	-mfloat-abi=soft \
+	-mlittle-endian \
+	--target=thumbv6m-ti-none-eabi \
 	-O2 \
 	-Oz \
 	-ffunction-sections \
@@ -74,7 +77,8 @@ CFLAGS = \
 	-Wextra \
 	-std=c99 \
 	-MMD \
-	-MP
+	-MP \
+	-fno-builtin
 
 # Debug compiler flags
 DEBUG_CFLAGS = \
@@ -83,6 +87,8 @@ DEBUG_CFLAGS = \
 	-march=armv6-m \
 	-mthumb \
 	-mfloat-abi=soft \
+	-mlittle-endian \
+	--target=thumbv6m-ti-none-eabi \
 	-O0 \
 	-ffunction-sections \
 	-fdata-sections \
@@ -92,6 +98,7 @@ DEBUG_CFLAGS = \
 	-std=c99 \
 	-MMD \
 	-MP \
+	-fno-builtin \
 	-DDEBUG
 
 # Linker flags (Release)
@@ -100,12 +107,15 @@ LDFLAGS = \
 	-march=armv6-m \
 	-mthumb \
 	-mfloat-abi=soft \
+	-mlittle-endian \
+	--target=thumbv6m-ti-none-eabi \
 	-O2 \
 	-Wl,--diag_suppress=10063 \
 	-Wl,-m,$(RELEASE_DIR)/$(PROJECT_NAME).map \
 	-Wl,-i,$(MSPM0_SDK_ROOT)/source \
 	-Wl,-i,freertos_builds_LP_MSPM0G3507_release_ticlang/Debug \
-	-Wl,-i,$(TI_COMPILER_ROOT)/lib
+	-Wl,-i,$(TI_COMPILER_ROOT)/lib \
+	-L$(TI_COMPILER_ROOT)/lib
 
 # Debug linker flags
 DEBUG_LDFLAGS = \
@@ -113,12 +123,15 @@ DEBUG_LDFLAGS = \
 	-march=armv6-m \
 	-mthumb \
 	-mfloat-abi=soft \
+	-mlittle-endian \
+	--target=thumbv6m-ti-none-eabi \
 	-O0 \
 	-Wl,--diag_suppress=10063 \
 	-Wl,-m,$(BUILD_DIR)/$(PROJECT_NAME).map \
 	-Wl,-i,$(MSPM0_SDK_ROOT)/source \
 	-Wl,-i,freertos_builds_LP_MSPM0G3507_release_ticlang/Debug \
-	-Wl,-i,$(TI_COMPILER_ROOT)/lib
+	-Wl,-i,$(TI_COMPILER_ROOT)/lib \
+	-L$(TI_COMPILER_ROOT)/lib
 
 # Libraries
 LIBS = \
@@ -163,27 +176,27 @@ $(RELEASE_DIR):
 # Compile source files for release
 $(RELEASE_DIR)/%.o: %.c | $(RELEASE_DIR)
 	@echo "Compiling $< (release)..."
-	$(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -MF"$(@:.o=.d)" -MT"$@" -o $@ $<
+	@unset COVFILE; $(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -MF"$(@:.o=.d)" -MT"$@" -o $@ $<
 
 # Compile startup file for release
 $(RELEASE_DIR)/startup_mspm0g350x_ticlang.o: $(STARTUP_SOURCE) | $(RELEASE_DIR)
 	@echo "Compiling startup file (release)..."
-	$(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -MF"$(@:.o=.d)" -MT"$@" -o $@ $<
+	@unset COVFILE; $(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -MF"$(@:.o=.d)" -MT"$@" -o $@ $<
 
 # Compile source files for debug
 $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 	@echo "Compiling $< (debug)..."
-	$(CC) $(DEBUG_CFLAGS) $(INCLUDES) $(DEFINES) -MF"$(@:.o=.d)" -MT"$@" -o $@ $<
+	@unset COVFILE; $(CC) $(DEBUG_CFLAGS) $(INCLUDES) $(DEFINES) -MF"$(@:.o=.d)" -MT"$@" -o $@ $<
 
 # Compile startup file for debug
 $(BUILD_DIR)/startup_mspm0g350x_ticlang.o: $(STARTUP_SOURCE) | $(BUILD_DIR)
 	@echo "Compiling startup file (debug)..."
-	$(CC) $(DEBUG_CFLAGS) $(INCLUDES) $(DEFINES) -MF"$(@:.o=.d)" -MT"$@" -o $@ $<
+	@unset COVFILE; $(CC) $(DEBUG_CFLAGS) $(INCLUDES) $(DEFINES) -MF"$(@:.o=.d)" -MT"$@" -o $@ $<
 
 # Link release build
 $(RELEASE_DIR)/$(PROJECT_NAME).out: $(RELEASE_OBJECTS)
 	@echo "Linking release build..."
-	$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
+	@unset COVFILE; $(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
 	@echo "Release build complete!"
 	$(SIZE) $@
 
